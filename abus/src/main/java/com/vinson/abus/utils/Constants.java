@@ -10,8 +10,8 @@ package com.vinson.abus.utils;
 
 public class Constants {
 
-    private static final String BASE_SERVER = "http://bus.wuhancloud.cn:9087/website/web";
-    private static final String CITY_ID = "/420100";
+    public static final String BASE_SERVER = "http://bus.wuhancloud.cn:9087/website/web/";
+    public static final String CITY_ID = "420100/";
     private static final String END_STR = ".do";
     private static final String SPLITE = "/";
 
