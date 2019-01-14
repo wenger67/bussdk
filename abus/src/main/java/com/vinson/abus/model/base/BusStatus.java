@@ -1,4 +1,12 @@
-package com.vinson.abus.model;
+/*
+ * Copyright (c) 2019. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+ * Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
+ * Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
+ * Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
+ * Vestibulum commodo. Ut rhoncus gravida arcu.
+ */
+
+package com.vinson.abus.model.base;
 
 /**
  * project:bussdk
@@ -12,18 +20,19 @@ package com.vinson.abus.model;
 
 public class BusStatus {
     private int mBusId;
-    private int mNextStop; // 下一个站点
-    private int mReachStop;// 1:到站 0:未到站
+    private int mNextStop; // next station
+    private int mReachStop;// 1:reach 0:not reach
     private double mLongitude;
     private double mLatitude;
 
-    public BusStatus(int mBusId, int mNextStop, int mReachStop, double mLongitude,
-                     double mLatitude) {
-        this.mBusId = mBusId;
-        this.mNextStop = mNextStop;
-        this.mReachStop = mReachStop;
-        this.mLongitude = mLongitude;
-        this.mLatitude = mLatitude;
+    public BusStatus(String str) {
+        // "51802|12|4|0|114.39850974964217|30.501058398660536"
+        String[] fileds = str.split("[|]");
+        this.mBusId = Integer.valueOf(fileds[0]);
+        this.mNextStop = Integer.valueOf(fileds[2]);
+        this.mReachStop = Integer.valueOf(fileds[3]);
+        this.mLongitude = Double.valueOf(fileds[4]);
+        this.mLatitude = Double.valueOf(fileds[5]);
     }
 
     public int getBusId() {
