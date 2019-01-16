@@ -1,6 +1,25 @@
 apply plugin: 'com.android.application'
 
+static def getVersion() {
+    def cmd = 'git rev-list HEAD --first-parent --count'
+    return cmd.execute().text.trim().toInteger()
+}
+
+static def buildTime() {
+    return new Date().format("yyyyMMdd.HHmmss", TimeZone.getTimeZone("UTC"))
+}
+
 android {
+    Properties properties = new Properties()
+    InputStream inputStream = rootProject.file('local.properties').newDataInputStream()
+    properties.load(inputStream)
+
+    def key_keyAlias = properties.getProperty("keyAlias")
+    def key_keyPassword = properties.getProperty("keyPassword")
+    def key_keyFile = properties.getProperty("keyFile")
+    def key_storePassword = properties.getProperty("storePassword")
+    def tencent_map_key = properties.getProperty("tencent_map_key")
+
     compileSdkVersion 28
     buildToolsVersion "28.0.1"
     defaultConfig {
@@ -8,30 +27,83 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    signingConfigs {
+        debug {
+        }
+
+        release {
+            keyAlias key_keyAlias
+            keyPassword key_keyPassword
+            storeFile file(key_keyFile)
+            storePassword key_storePassword
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            debuggable false
+            jniDebuggable false
+            signingConfig signingConfigs.release
+            renderscriptDebuggable false
+            renderscriptOptimLevel 3
+            zipAlignEnabled true
+            applicationIdSuffix '.release'
+            manifestPlaceholders = [tencent_key: tencent_map_key]
+        }
+        debug {
+            debuggable true
+            jniDebuggable true
+            signingConfig signingConfigs.debug
+            renderscriptDebuggable false
+            renderscriptOptimLevel 3
+            minifyEnabled false
+            zipAlignEnabled false
+            applicationIdSuffix '.debug'
+            manifestPlaceholders = [tencent_key: tencent_map_key]
+        }
+
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def outputFile = output.outputFile
+            if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                if (variant.buildType.name.equals("release")) {
+                    outputFileName = "abusdemo_${defaultConfig.versionName}.${getVersion()}_release.apk"
+                } else {
+                    outputFileName = "abusdemo_${defaultConfig.versionName}.${getVersion()}_${buildTime()}_debug.apk"
+                }
+            }
         }
     }
+
     compileOptions {
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
     }
+
+    sourceSets{
+        main{
+            jniLibs.srcDirs = ['libs']
+        }
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.0.0-beta01'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha3'
     implementation project(':abus')
-
     implementation 'com.squareup.retrofit2:retrofit:2.5.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+    implementation files('libs/TencentLocationSdk_v7.1.4.3_r4aa8ac63_20180911_165428.jar')
 }

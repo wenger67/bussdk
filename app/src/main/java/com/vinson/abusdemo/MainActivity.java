@@ -8,8 +8,11 @@
 
 package com.vinson.abusdemo;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -49,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     private void initView() {
         myAdapter = new MyAdapter(this);
         mListView.setAdapter(myAdapter);
+        mListView.setOnItemClickListener((parent, view, position, id) ->  {
+            startActivity(new Intent(MainActivity.this, BuslineActivity.class));
+        });
     }
 
     private void initEvent() {
