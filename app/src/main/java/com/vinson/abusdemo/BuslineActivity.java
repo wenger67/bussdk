@@ -17,12 +17,24 @@ import com.tencent.map.geolocation.TencentLocationListener;
 import com.tencent.map.geolocation.TencentLocationManager;
 import com.tencent.map.geolocation.TencentLocationRequest;
 import com.tencent.map.geolocation.TencentPoi;
+import com.tencent.mapsdk.raster.model.BitmapDescriptorFactory;
 import com.tencent.mapsdk.raster.model.LatLng;
+import com.tencent.mapsdk.raster.model.Marker;
+import com.tencent.mapsdk.raster.model.MarkerOptions;
 import com.tencent.tencentmap.mapsdk.map.MapView;
 import com.tencent.tencentmap.mapsdk.map.TencentMap;
+import com.vinson.abus.core.ServiceApiImpl;
+import com.vinson.abus.model.LineDetailSearchResult;
+import com.vinson.abus.model.base.StopStation;
 import com.vinson.bussdk.R;
 
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.vinson.abusdemo.MainActivity.EXTRA_LINE_NO;
 
 /**
  * project:bussdk
@@ -36,6 +48,8 @@ public class BuslineActivity extends Activity implements TencentLocationListener
 
     MapView mapView;
     TencentMap tencentMap;
+    Marker marker;
+    String lineNo;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,16 +57,67 @@ public class BuslineActivity extends Activity implements TencentLocationListener
         mapView = findViewById(R.id.map_view);
         mapView.onCreate(savedInstanceState);
         tencentMap = mapView.getMap();
+        lineNo = getIntent().getStringExtra(EXTRA_LINE_NO);
+
+        initData();
+        initEvent();
+    }
+
+    private void initData() {
+
+    }
+
+    private void initEvent() {
+        tencentMap.setOnMarkerDraggedListener(new TencentMap.OnMarkerDraggedListener() {
+            @Override public void onMarkerDrag(Marker marker) {
+
+            }
+
+            @Override public void onMarkerDragEnd(Marker marker) {
+                Log.d(TAG, "end :" + marker.getPosition().toString());
+                tencentMap.animateTo(marker.getPosition());
+            }
+
+            @Override public void onMarkerDragStart(Marker marker) {
+
+            }
+        });
+
+        tencentMap.setOnMarkerClickListener((marker) ->{
+            if (marker.isInfoWindowShown())
+                marker.hideInfoWindow();
+            else marker.showInfoWindow();
+            return true;
+        });
     }
 
     @Override protected void onResume() {
+        Log.d(TAG, "onResume");
         mapView.onResume();
         super.onResume();
-        TencentLocationManager locationManager = TencentLocationManager.getInstance(this);
-        TencentLocationRequest locationRequest = TencentLocationRequest.create()
-                .setRequestLevel(TencentLocationRequest.REQUEST_LEVEL_POI);
-        int ret = locationManager.requestLocationUpdates(locationRequest, this);
-        Log.d(TAG, "request result : " + ret);
+
+        if (lineNo != null && !lineNo.isEmpty()) {
+            ServiceApiImpl.getInstance().getLineDetailByLineNo(lineNo, 0).enqueue(new Callback<LineDetailSearchResult>() {
+                @Override
+                public void onResponse(Call<LineDetailSearchResult> call, Response<LineDetailSearchResult> response) {
+                    if (response.body() != null) {
+                        Log.d(TAG, response.body().getData().toString());
+                        List<StopStation> stopStations = response.body().getData().getStops();
+                        tencentMap.animateTo(new LatLng(stopStations.get(0).getLatitude(), stopStations.get(0).getLongitude()));
+                        tencentMap.setZoom(16);
+
+                        for (StopStation s : stopStations) {
+                            Marker marker = tencentMap.addMarker(new MarkerOptions().position(new LatLng(s.getLatitude(), s.getLongitude()))
+                                    .title(s.getStopName()).anchor(0.5f, 0.5f).icon(BitmapDescriptorFactory.defaultMarker())
+                                    .draggable(false));
+                        }
+                    }
+                }
+                @Override public void onFailure(Call<LineDetailSearchResult> call, Throwable t) {
+                    Log.d(TAG, t.getMessage());
+                }
+            });
+        }
     }
 
     @Override protected void onStop() {
@@ -71,15 +136,6 @@ public class BuslineActivity extends Activity implements TencentLocationListener
     }
 
     @Override public void onLocationChanged(TencentLocation tencentLocation, int i, String s) {
-        Log.d(TAG, tencentLocation.getLatitude() + ", " + tencentLocation.getLongitude());
-        Log.d(TAG, tencentLocation.getDistrict());
-        List<TencentPoi> pois = tencentLocation.getPoiList();
-        for (TencentPoi poi : pois) {
-            Log.d(TAG, poi.getAddress() + ", " +poi.getName());
-        }
-        tencentMap.setZoom(18);
-        tencentMap.setCenter(new LatLng(tencentLocation.getLatitude(), tencentLocation
-                .getLongitude()));
     }
 
     @Override public void onStatusUpdate(String s, int i, String s1) {

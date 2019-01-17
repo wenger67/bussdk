@@ -32,7 +32,7 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = MainActivity.class.getSimpleName();
-
+    public static final String EXTRA_LINE_NO = "lineNo";
     SearchView mSearchView;
     ListView mListView;
     MyAdapter myAdapter;
@@ -53,7 +53,10 @@ public class MainActivity extends AppCompatActivity {
         myAdapter = new MyAdapter(this);
         mListView.setAdapter(myAdapter);
         mListView.setOnItemClickListener((parent, view, position, id) ->  {
-            startActivity(new Intent(MainActivity.this, BuslineActivity.class));
+            BusLine busLine = myAdapter.getItem(position);
+            Intent intent = new Intent(this, BuslineActivity.class);
+            intent.putExtra(EXTRA_LINE_NO, busLine.getLineNo());
+            startActivity(intent);
         });
     }
 
